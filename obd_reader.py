@@ -12,7 +12,7 @@ class OBDReader:
 
    #Connect to the OBD-II adapter
     def _connect(self):
-        self.connection = obd.OBD()  # Auto-connect to the OBD-II adapter
+        self.connection = obd.OBD("/dev/ttyUSB0")  # Auto-connect to the OBD-II adapter
         # self.connection = obd.OBD("COM4")  # Auto-connect to the OBD-II adapter
         self.cmd = obd.commands
         
