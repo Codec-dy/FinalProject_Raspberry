@@ -1,3 +1,4 @@
+from multiprocessing import connection
 import time
 
 import obd
@@ -7,12 +8,13 @@ class OBDReader:
     def __init__(self):
         self.connection = None
         self.cmd = None  # Placeholder for OBD command, can be set later
-        self.connect() 
+        self._connect() 
 
    #Connect to the OBD-II adapter
-    def connect(self):
+    def _connect(self):
         self.connection = obd.OBD("COM4")  # Auto-connect to the OBD-II adapter
         self.cmd = obd.commands
+        
 
     #Helper method to get the value of a specific OBD-II command
     def _get_value(self, command):
@@ -32,8 +34,11 @@ class OBDReader:
 
     #Get the vehicle speed from the OBD-II adapter
     def get_speed(self):
-        return self._get_value(self.cmd.SPEED)
-        
+        try:
+            return self._get_value(self.cmd.SPEED) * 0.621371  # Convert from km/h to mph
+        except:
+            return None
+
     #Get the throttle position from the OBD-II adapter
     #This Throttle Position sensor measures the position of the throttle valve, which controls the amount of air entering the engine.
     #Without accurate throttle position readings, the engine may not operate optimally, leading to increased fuel consumption and potential engine damage.
@@ -106,6 +111,15 @@ class OBDReader:
     def get_hybrid_battery_life(self):
         return self._get_value(self.cmd.HYBRID_BATTERY_REMAINING)
 
+
+    #Get engine on
+    #This Engine On sensor checks if the engine is currently running, which is important for determining the vehicle's operational status.
+    def get_engine_on(self):
+        read = self.read_data(None,None)
+        
+        if any(v for v in read.values()):
+            return 1
+        return 0
     
     #Calculate the overall engine health score based on various OBD-II parameters
     #The engine health score is calculated based on several key parameters, including engine load, coolant temperature, MAP pressure, RPM, throttle position, MAF, and short term fuel trim. Each parameter is scored individually based on predefined thresholds, and the overall health score is a weighted average of these individual scores.
@@ -148,7 +162,7 @@ class OBDReader:
         # Your Ford C-Max is a hybrid.
         # When RPM is 0, the gasoline engine may simply be OFF.
 
-        if rpm <= 0:
+        if rpm <= 0 and speed <= 0:
             return {
                 "health_score": None,
                 "status": "Engine Off",
@@ -410,24 +424,26 @@ class OBDReader:
         }
     
     #Read all available OBD-II data from the vehicle
-    def read_data(self,):
+    def read_data(self, vehicle_id=None, driving_session_id=None):
         if self.connection and self.connection.is_connected():
             # Read various OBD-II parameters
             return {
-                "RPM": self.get_rpm(),
-                "Speed": self.get_speed(),
-                "Throttle Position": self.get_throttle_position(),
-                "Engine Load": self.get_engine_load(),
-                "Fuel Level": self.get_fuel_level(),
-                "Coolant Temperature": self.get_coolant_temp(),
-                "Intake Air Temperature": self.get_intake_air_temp(),
-                "Mass Air Flow": self.get_mass_air_flow(),
-                "Fuel Pressure": self.get_fuel_pressure(),
-                "Timing Advance": self.get_timing_advance(),
-                "Control Module Voltage": self.get_control_module_voltage(),
+                "vehicle_id": vehicle_id,
+                "driving_session_id": driving_session_id,
+                "rpm": self.get_rpm(),
+                "speed": self.get_speed(),
+                "throttle_position": self.get_throttle_position(),
+                "engine_load": self.get_engine_load(),
+                "fuel_level": self.get_fuel_level(),
+                "coolant_temperature": self.get_coolant_temp(),
+                "intake_air_temperature": self.get_intake_air_temp(),
+                "map_pressure": self._get_value(self.cmd.INTAKE_PRESSURE),
+                "mass_air_flow": self.get_mass_air_flow(),
+                "fuel_pressure": self.get_fuel_pressure(),
+                "timing_advance": self.get_timing_advance(),
+                "control_module_voltage": self.get_control_module_voltage(),
                 "short_trim": self.get_short_term_fuel_trim(),
-                "Transmission Fluid Temperature": self.get_transmission_fluid_temp(),
-                "Hybrid Battery Life": self.get_hybrid_battery_life()
+                "hybrid_battery_life": self.get_hybrid_battery_life()
             }
         else:
             return None
@@ -442,30 +458,46 @@ class OBDReader:
             return None
     
 
-    def driving_session(self):
-        lst = []
-        hlth_list = []
-        while True:
-            try:
-                data = self.read_data()
-                data_2 = self.engine_health()
-                if data:
-                    print(data)
-                    lst.append(data)
-                    hlth_list.append(data_2)
-                else:
-                    print("No OBD-II connection.")
-                time.sleep(1)  # Wait for 1 second before the next reading
-            except KeyboardInterrupt:
-                print("Driving session ended by user.")
-                #write data to a file
-                with open("driving_session_data.txt", "w") as f:
-                    for item in lst:
-                        f.write("%s\n" % item)
-                with open("driving_session_health_data.txt", "w") as f:
-                    for item in hlth_list:
-                        f.write("%s\n" % item)
-                break
+    def driving_session(self,lst, vehicle_id=None, driving_session_id=None):
+        try:
+            data = self.read_data(vehicle_id=vehicle_id, driving_session_id=driving_session_id)
+            if data:
+                print(data)
+                lst.append(data)
+                
+            else:
+                print("No OBD-II connection.")
+            time.sleep(1)  # Wait for 1 second before the next reading
+        except:
+            print("an error occurred while reading data.")
+        
+    # def driving_session(self):
+    #     lst = []
+    #     hlth_list = []
+        
+    #     while True:
+    #         try:
+    #             data = self.read_data()
+    #             data_2 = self.engine_health()
+    #             if data:
+    #                 print(data)
+    #                 lst.append(data)
+    #                 hlth_list.append(data_2)
+    #             else:
+    #                 print("No OBD-II connection.")
+    #             time.sleep(1)  # Wait for 1 second before the next reading
+    #         except KeyboardInterrupt:
+    #             print("Driving session ended by user.")
+    #             #write data to a file
+    #             # timestamp 
+    #             timestamp = time.strptime
+    #             with open(f"driving_session_data{timestamp}.txt", "w") as f:
+    #                 for item in lst:
+    #                     f.write("%s\n" % item)
+    #             with open("driving_session_health_data.txt", "w") as f:
+    #                 for item in hlth_list:
+    #                     f.write("%s\n" % item)
+    #             break
                 
 
     def disconnect(self):
@@ -477,8 +509,6 @@ class OBDReader:
 
     
 
-Reader = OBDReader()
-# print(Reader.read_data())
-# print(Reader.engine_health())
-
-print(Reader.driving_session())
+# Reader = OBDReader()
+# # # print(Reader.read_data())
+# print(Reader.get_engine_on())
