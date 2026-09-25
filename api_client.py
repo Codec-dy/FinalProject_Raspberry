@@ -14,7 +14,7 @@ class APIClient:
         # self.base_url = "http://127.0.0.1:8000" 
         self.base_url = "https://finalproject-backend-3r92.onrender.com"
         self.Reader = obd_reader.OBDReader()
-        self.vehicle_id = "7e80c87a-1c23-4cf4-8d7e-be6ea989f5f4"  # Replace with the actual vehicle ID
+        self.vehicle_id = "9015fe12-f55c-4ca4-b6d9-afd0fb1988a3"  # Replace with the actual vehicle ID
         self.current_driving_session_id = None
         self.get("/api/raspberrypitest")
 
@@ -39,25 +39,24 @@ class APIClient:
         lst = []
         engine_status = 0
         while True:
-            try:
-                engine_status = self.Reader.get_engine_on()
-                print("engine_status ", engine_status)
-                if engine_status == 1:
-                    endpoint = "/api/driving_sessions/start"
-                    print("Engine is ON. Starting driving session...")
-                    response = self.post_query(
-                        endpoint,
-                        {"vehicle_id": self.vehicle_id},
-                    )
-                    print(response)
-                    self.current_driving_session_id = response.get("driving_session_id")
-                    break
-                    
-                else:
-                    print("Engine is OFF. Waiting for the engine to start...")
-                    time.sleep(5)  # Wait for 5 seconds before checking again   
-            except:
-                ...
+            
+            engine_status = self.Reader.get_engine_on()
+            print("engine_status ", engine_status)
+            if engine_status == 1:
+                endpoint = "/api/driving_sessions/start"
+                print("Engine is ON. Starting driving session...")
+                response = self.post_query(
+                    endpoint,
+                    {"vehicle_id": self.vehicle_id},
+                )
+                print(response)
+                self.current_driving_session_id = response.get("driving_session_id")
+                break
+                
+            else:
+                print("Engine is OFF. Waiting for the engine to start...")
+                time.sleep(5)  # Wait for 5 seconds before checking again   
+        
         while True:
             if engine_status == 0:
                 print("Engine is OFF. Ending driving session...")
