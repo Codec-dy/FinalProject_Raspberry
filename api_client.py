@@ -62,6 +62,8 @@ class APIClient:
                     telemetry = eval(session.get("telemetry"))  # Convert string representation of list back to list
                     self.send_start_time(start_time)
                     for telemetry_data in telemetry:
+                        if not telemetry_data["speed"]:
+                            continue
                         telemetry_data["driving_session_id"] = self.current_driving_session_id
                         telemetry_data["timestamp"] = datetime.fromtimestamp(
                             float(telemetry_data["timestamp"])
