@@ -18,7 +18,10 @@ class APIClient:
         # self.vehicle_id = "7e80c87a-1c23-4cf4-8d7e-be6ea989f5f4"  # Replace with the actual vehicle ID
         self.current_driving_session_id = None
         if self.check_connection():
-            self.send_offline_data()
+            try:
+                self.send_offline_data()
+            except Exception as e:
+                print(f"Error occurred while sending offline data: {e}")
         else:
             print("No connection to the server. Data will be stored locally.")
     
