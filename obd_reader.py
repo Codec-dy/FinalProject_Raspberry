@@ -444,7 +444,8 @@ class OBDReader:
                 "timing_advance": self.get_timing_advance(),
                 "control_module_voltage": self.get_control_module_voltage(),
                 "short_trim": self.get_short_term_fuel_trim(),
-                "hybrid_battery_life": self.get_hybrid_battery_life()
+                "hybrid_battery_life": self.get_hybrid_battery_life(),
+                "timestamp": time.time()
             }
         else:
             return None
@@ -511,5 +512,6 @@ class OBDReader:
     
 
 # Reader = OBDReader()
-# # # print(Reader.read_data())
+# print(Reader.read_data())
 # print(Reader.get_engine_on())
+# print(Reader.get_dtc())
