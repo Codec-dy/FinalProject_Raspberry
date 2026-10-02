@@ -63,8 +63,10 @@ class APIClient:
                     self.send_start_time(start_time)
                     for telemetry_data in telemetry:
                         telemetry_data["driving_session_id"] = self.current_driving_session_id
-                        telemetry_data["timestamp"] = datetime.fromtimestamp(float(telemetry_data.get("timestamp")))
-                    self.send_telemetry_data(telemetry) 
+                        telemetry_data["timestamp"] = datetime.fromtimestamp(
+                            float(telemetry_data["timestamp"])
+                        ).isoformat()
+                    self.send_telemetry_data(telemetry)
                     self.end_driving_session(self.current_driving_session_id, end_time)
                 self.clear_data_file()
             except Exception as e:
@@ -177,5 +179,6 @@ class APIClient:
 
 client = APIClient()
 client.start_driving_session()
+# client.send_offline_data()
 
 

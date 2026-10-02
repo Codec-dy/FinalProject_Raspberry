@@ -118,7 +118,7 @@ class OBDReader:
     def get_engine_on(self):
         read = self.read_data(None,None)
         
-        if any(v for v in read.values()):
+        if any(read[v] for v in read if v != "timestamp"):
             return 1
         return 0
     
