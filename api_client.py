@@ -176,7 +176,6 @@ class APIClient:
         return self.post(endpoint, data)
 
 client = APIClient()
-# client.start_driving_session()
-client.send_offline_data()
+client.start_driving_session()
 
 
