@@ -1,12 +1,10 @@
 
-
-
 import re
 import time
 
 import requests
 import obd_reader
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class APIClient:
@@ -14,8 +12,8 @@ class APIClient:
         # self.base_url = "http://127.0.0.1:8000" 
         self.base_url = "https://finalproject-backend-3r92.onrender.com"
         self.Reader = obd_reader.OBDReader()
-        self.vehicle_id = "9015fe12-f55c-4ca4-b6d9-afd0fb1988a3"  # Replace with the actual vehicle ID
-        # self.vehicle_id = "7e80c87a-1c23-4cf4-8d7e-be6ea989f5f4"  # Replace with the actual vehicle ID
+        # self.vehicle_id = "81736fa5-3467-4428-adbd-72f40c27802f"  # Replace with the actual vehicle ID
+        self.vehicle_id = "de9a7515-7753-4f4c-9c09-20a3a0e93220"  # Replace with the actual vehicle ID
         self.current_driving_session_id = None
         if self.check_connection():
             try:
@@ -29,7 +27,6 @@ class APIClient:
         # Store the data in a file if offline
         with open("data.txt", "a") as f:
             f.write(f"{key}: {value}\n")
-        
 
     def clear_data_file(self):
         # Clear the data file after sending the data to the server
@@ -57,8 +54,12 @@ class APIClient:
             print("Sending offline data to the server...")
             try:
                 for session in lst:
-                    start_time = datetime.fromtimestamp(float(session.get("start_time")))
-                    end_time = datetime.fromtimestamp(float(session.get("end_time")))
+                    start_time = datetime.fromtimestamp(
+                        float(session.get("start_time")), tz=timezone.utc
+                    )
+                    end_time = datetime.fromtimestamp(
+                        float(session.get("end_time")), tz=timezone.utc
+                    )
                     telemetry = eval(session.get("telemetry"))  # Convert string representation of list back to list
                     self.send_start_time(start_time)
                     for telemetry_data in telemetry:
@@ -66,7 +67,7 @@ class APIClient:
                             continue
                         telemetry_data["driving_session_id"] = self.current_driving_session_id
                         telemetry_data["timestamp"] = datetime.fromtimestamp(
-                            float(telemetry_data["timestamp"])
+                            float(telemetry_data["timestamp"]), tz=timezone.utc
                         ).isoformat()
                     self.send_telemetry_data(telemetry)
                     self.end_driving_session(self.current_driving_session_id, end_time)
@@ -139,7 +140,7 @@ class APIClient:
             engine_status = self.Reader.get_engine_on()
             print("Engine is ON. Continuing driving session...")
             self.Reader.driving_session(lst, vehicle_id=self.vehicle_id, driving_session_id=self.current_driving_session_id)
-            time.sleep(2)  # Wait for 5 seconds before checking again
+            time.sleep(5)  # Wait for 5 seconds before checking again
            
 
     def end_driving_session(self, driving_session_id, end_time=None):
@@ -182,5 +183,4 @@ class APIClient:
 client = APIClient()
 client.start_driving_session()
 # client.send_offline_data()
-
 

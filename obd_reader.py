@@ -472,36 +472,7 @@ class OBDReader:
             time.sleep(1)  # Wait for 1 second before the next reading
         except:
             print("an error occurred while reading data.")
-        
-    # def driving_session(self):
-    #     lst = []
-    #     hlth_list = []
-        
-    #     while True:
-    #         try:
-    #             data = self.read_data()
-    #             data_2 = self.engine_health()
-    #             if data:
-    #                 print(data)
-    #                 lst.append(data)
-    #                 hlth_list.append(data_2)
-    #             else:
-    #                 print("No OBD-II connection.")
-    #             time.sleep(1)  # Wait for 1 second before the next reading
-    #         except KeyboardInterrupt:
-    #             print("Driving session ended by user.")
-    #             #write data to a file
-    #             # timestamp 
-    #             timestamp = time.strptime
-    #             with open(f"driving_session_data{timestamp}.txt", "w") as f:
-    #                 for item in lst:
-    #                     f.write("%s\n" % item)
-    #             with open("driving_session_health_data.txt", "w") as f:
-    #                 for item in hlth_list:
-    #                     f.write("%s\n" % item)
-    #             break
-                
-
+   
     def disconnect(self):
         if self.connection:
             self.connection.close()
